@@ -80,11 +80,23 @@ const updateWorld = (world) => {
 	const {cells} = world
 	const buffer = getClonedCells(cells)
 	let isCollision = false
+
+	let forwards = [0, 1]
+	let backwards = [0, -1]
+
+	if (world.instruction === "ArrowRight") {
+		forwards = [1, 0]
+		backwards = [-1, 0]
+	} else if (world.instruction === "ArrowLeft") {
+		forwards = [-1, 0]
+		backwards = [1, 0]
+	}
+
 	for (const [key, cell] of cells.entries()) {
 		if (!cell.active) continue
-		const below = getRelativeCell(world, cell, [0, 1])
+		const below = getRelativeCell(world, cell, forwards)
 	
-		if (below.colour !== Colour.Black) {
+		if (below === cell || !below.active && below.colour !== Colour.Black) {
 			isCollision = true
 			cell.active = false
 			break
@@ -96,12 +108,19 @@ const updateWorld = (world) => {
 
 		bufferBelow.colour = cell.colour
 		bufferBelow.active = true
-		bufferCell.colour = Colour.Black
-		bufferCell.active = false
+
+		const above = getRelativeCell(world, cell, backwards)
+		if (above === cell || !above.active) {
+			bufferCell.colour = Colour.Black
+			bufferCell.active = false
+		}
 
 	}
 
 	if (isCollision) {
+		for (const cell of cells.values()) {
+			cell.active = false
+		}
 		spawnBlock(world)
 	} else {
 		world.cells = buffer
@@ -109,11 +128,16 @@ const updateWorld = (world) => {
 }
 
 const spawnBlock = (world) => {
+	const id = Random.Uint8 % SHAPES.length
 	const cell = getTopCell(world)
-	const colour = Random.from(COLOURS)
-	const shape = Random.from(SHAPES)
-	cell.colour = colour
-	cell.active = true
+	const colour = COLOURS[id]
+	const shape = SHAPES[id]
+
+	const relativeCells = shape.map(point => getRelativeCell(world, cell, point))
+	for (const relativeCell of relativeCells) {
+		relativeCell.colour = colour
+		relativeCell.active = true
+	}
 }
 
 //======//
@@ -160,7 +184,17 @@ const drawCell = (context, cell, world) => {
 //=======//
 const SHAPES = []
 SHAPES.push([
-	[0, 0],
+	[-1, 0], [ 0, 0], [ 1, 0],
+])
+
+SHAPES.push([
+	[ 0, 0],
+	[ 0, 1], [ 1, 1],
+])
+
+SHAPES.push([
+	[ 0, 0],
+	[-1, 1], [ 0, 1],
 ])
 
 //========//
@@ -169,6 +203,7 @@ SHAPES.push([
 const COLOURS = [
 	Colour.Green,
 	Colour.Blue,
+	Colour.Red,
 ]
 
 //=============//
@@ -190,6 +225,9 @@ const stage = Stage.start({aspectRatio: [WORLD_WIDTH, WORLD_HEIGHT]})
 let t = 0
 stage.tick = (context) => {
 	t++
+	if (Keyboard["ArrowRight"]) world.instruction = "ArrowRight"
+	if (Keyboard["ArrowLeft"]) world.instruction = "ArrowLeft"
+	if (!Keyboard["ArrowRight"] && !Keyboard["ArrowLeft"]) world.instruction = undefined
 	if (t >= 10) {
 		updateWorld(world)
 		t = 0
