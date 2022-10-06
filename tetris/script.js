@@ -77,20 +77,13 @@ const getClonedCells = (cells) => {
 }
 
 const updateWorld = (world) => {
+	moveCells(world, [0, 1], [0, -1])
+}
+
+const moveCells = (world, forwards, backwards, {freeze = true} = {}) => {
 	const {cells} = world
 	const buffer = getClonedCells(cells)
 	let isCollision = false
-
-	let forwards = [0, 1]
-	let backwards = [0, -1]
-
-	if (world.instruction === "ArrowRight") {
-		forwards = [1, 0]
-		backwards = [-1, 0]
-	} else if (world.instruction === "ArrowLeft") {
-		forwards = [-1, 0]
-		backwards = [1, 0]
-	}
 
 	for (const [key, cell] of cells.entries()) {
 		if (!cell.active) continue
@@ -98,7 +91,7 @@ const updateWorld = (world) => {
 	
 		if (below === cell || !below.active && below.colour !== Colour.Black) {
 			isCollision = true
-			cell.active = false
+			if (freeze)	cell.active = false
 			break
 		}
 		
@@ -118,10 +111,12 @@ const updateWorld = (world) => {
 	}
 
 	if (isCollision) {
-		for (const cell of cells.values()) {
-			cell.active = false
+		if (freeze) { 
+			for (const cell of cells.values()) {
+				cell.active = false
+			}
+			spawnBlock(world)
 		}
-		spawnBlock(world)
 	} else {
 		world.cells = buffer
 	}
@@ -225,12 +220,19 @@ const stage = Stage.start({aspectRatio: [WORLD_WIDTH, WORLD_HEIGHT]})
 let t = 0
 stage.tick = (context) => {
 	t++
-	if (Keyboard["ArrowRight"]) world.instruction = "ArrowRight"
-	if (Keyboard["ArrowLeft"]) world.instruction = "ArrowLeft"
-	if (!Keyboard["ArrowRight"] && !Keyboard["ArrowLeft"]) world.instruction = undefined
 	if (t >= 10) {
 		updateWorld(world)
 		t = 0
 	}
 	drawWorld(context, world)
 }
+
+on.keydown(e => {
+	if (e.key === "ArrowRight") {
+		moveCells(world, [1, 0], [-1, 0], {freeze: false})
+	}
+
+	if (e.key === "ArrowLeft") {
+		moveCells(world, [-1, 0], [1, 0], {freeze: false})
+	}
+})
