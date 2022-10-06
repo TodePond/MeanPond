@@ -167,6 +167,41 @@ const spawnBlock = (world) => {
 	}
 }
 
+const rotateCells = (world, cells) => {
+	const buffer = getClonedCells(world.cells)
+	const head = cells[1]
+	const tail = cells.filter(cell => cell !== head)
+	const origin = head.position
+	let [ox, oy] = origin
+	for (const cell of tail) {
+		const [x, y] = cell.position
+		const [dx, dy] = [x - ox, y - oy]
+		const rotatedDisplacement = [-dy, dx]
+		const [rdx, rdy] = rotatedDisplacement
+		const rotatedPosition = [ox + rdx, oy + rdy]
+		const targetedCell = getCell(world, rotatedPosition)
+		const sourceCell = getCell(world, [ox + dy, oy - dx])
+		if (targetedCell !== undefined && (targetedCell.active || targetedCell.colour === Colour.Black)) {
+			const key = getCellKey(cell)
+			const targetKey = getCellKey(targetedCell)
+			const bufferCell = buffer.get(key)
+			const bufferTarget = buffer.get(targetKey)
+
+			if (!sourceCell.active) {
+				bufferCell.colour = Colour.Black
+				bufferCell.active = false
+			}
+
+			bufferTarget.colour = cell.colour
+			bufferTarget.active = true
+		} else {
+			throw new Error("No space for rotation")
+		}
+	}
+	
+	world.cells = buffer
+}
+
 //======//
 // CELL //
 //======//
@@ -260,11 +295,20 @@ stage.tick = (context) => {
 }
 
 on.keydown(e => {
+	
 	if (e.key === "ArrowRight") {
 		moveCells(world, [1, 0], [-1, 0], {freeze: false})
+		return
 	}
 
 	if (e.key === "ArrowLeft") {
 		moveCells(world, [-1, 0], [1, 0], {freeze: false})
+		return
 	}
+
+	if (e.key === " ") {
+		const cells = [...world.cells.values()].filter(cell => cell.active)
+		rotateCells(world, cells)
+	}
+
 })
