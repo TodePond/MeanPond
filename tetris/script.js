@@ -115,11 +115,43 @@ const moveCells = (world, forwards, backwards, {freeze = true} = {}) => {
 			for (const cell of cells.values()) {
 				cell.active = false
 			}
+			checkRowsClear(world)
 			spawnBlock(world)
 		}
 	} else {
 		world.cells = buffer
 	}
+}
+
+const checkRowsClear = (world) => {
+	const [width, height] = world.dimensions
+	for (const y of (0).to(height-1)) {
+		checkRowClear(world, y)
+	}
+}
+
+const checkRowClear = (world, y) => {
+	const [width] = world.dimensions
+	for (const x of (0).to(width-1)) {
+		const cell = getCell(world, [x, y])
+		if (cell.colour === Colour.Black) return false
+	}
+
+	const {cells} = world
+	const buffer = getClonedCells(cells)
+	for (const [key, cell] of cells.entries()) {
+		if (cell.position[1] > y) continue
+		const above = getRelativeCell(world, cell, [0, -1])
+		const abovekey = getCellKey(above)
+		const bufferCell = buffer.get(key)
+		if (cell !== above) {
+			bufferCell.colour = above.colour
+		} else {
+			bufferCell.colour = Colour.Black
+		}
+	}
+
+	world.cells = buffer
 }
 
 const spawnBlock = (world) => {
@@ -204,7 +236,7 @@ const COLOURS = [
 //=============//
 // GAME CONFIG //
 //=============//
-const WORLD_WIDTH = 20
+const WORLD_WIDTH = 10
 const WORLD_HEIGHT = 20
 
 //============//
