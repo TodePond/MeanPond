@@ -1,0 +1,3 @@
+[submodule "BerdLabs"]
+	path = BerdLabs
+	url = https://github.com/TodePond/BerdLabs
