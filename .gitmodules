@@ -1,3 +1,6 @@
 [submodule "BerdLabs"]
 	path = BerdLabs
 	url = https://github.com/TodePond/BerdLabs
+[submodule "SandLab"]
+	path = SandLab
+	url = https://github.com/TodePond/SandLab
