@@ -4,3 +4,9 @@
 [submodule "SandLab"]
 	path = SandLab
 	url = https://github.com/TodePond/SandLab
+[submodule "LabLab"]
+	path = LabLab
+	url = https://github.com/TodePond/LabLab
+[submodule "FishLab"]
+	path = FishLab
+	url = https://github.com/TodePond/FishLab
